@@ -1,117 +1,137 @@
-# ATML PA2 - LLM Post-Training
+# Modern LLM Post-Training & Alignment Framework (RLHF, DPO, PPO, GRPO)
 
-<!-- FINAL_STUDENT_SETUP -->
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
+[![PyTorch 2.4+](https://img.shields.io/badge/pytorch-2.4%2B-ee4c2c.svg)](https://pytorch.org/)
+[![TRL 0.27.2](https://img.shields.io/badge/TRL-0.27.2-yellow.svg)](https://github.com/huggingface/trl)
+[![Transformers 4.57.1](https://img.shields.io/badge/transformers-4.57.1-orange.svg)](https://huggingface.co/docs/transformers)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 
-## Quick start
-
-```bash
-git clone https://github.com/AbDu11aHHH/ATML-PA2-LLM-PostTraining.git
-cd ATML-PA2-LLM-PostTraining
-python -m pip install -r requirements.txt
-python -m scripts.download_assets
-python -m scripts.validate_assets
-```
-
-The fixed datasets, cached diagnostics, and supplied
-continuation checkpoints are downloaded from:
-
-https://huggingface.co/datasets/AbDu11aHHH/ATML-PA2-assets
-
-Pinned release revision:
-
-`0b350481fb03f5525a35bcdec4131bd4fe487f98`
+A modular, high-performance research framework for modern Large Language Model (LLM) post-training, preference optimization, and reinforcement learning alignment. Implements Direct Preference Optimization (DPO), Proximal Policy Optimization (PPO), Group Relative Policy Optimization (GRPO / DeepSeek-style), LLM-as-a-Judge Safety Auditing, and comparative evaluation of Reinforcement Learning with Verifiable Rewards (RLVR) versus AI Feedback (RLAIF).
 
 ---
-# ATML PA2 - LLM Post-Training
 
-This is the **student starter repository** for ATML PA2. The released code is intentionally incomplete: Tasks 1-3 provide model/data loading, objective helpers, checkpoint restoration, and experiment entry points, but **you must implement the training loops and ablation orchestration yourself**. Each of Tasks 1-3 also contains one deliberate algorithmic defect in its core objective code; identifying and correcting these defects is part of validating your implementation.
+## 📌 Framework Highlights
 
-Task 4 supplies the fixed AI safety judge and response-generation utilities, but you must write the evaluation/aggregation code. Task 5 supplies the exact RLVR verifier, the fixed pairwise AI judge used for RLAIF evaluation, and data/model loaders; you must implement the requested evaluation and analysis.
+- **Direct Preference Optimization (DPO)**:
+  - Exact offline preference optimization eliminating the need for a separate reward model.
+  - Parameterized $eta$ temperature ablations assessing policy drift and implicit reward scaling.
+  - Systematic length-bias diagnostics isolating verbosity exploitation from true reasoning quality.
+- **Proximal Policy Optimization (PPO)**:
+  - Actor-critic policy gradient optimization with generalized advantage estimation (GAE).
+  - PPO ratio clipping dynamics ($\epsilon=0.2$) and value function calibration diagnostics.
+  - Dynamic adaptive versus fixed KL penalty ($eta_{	ext{KL}}$) ablations to control entropy collapse.
+- **Group Relative Policy Optimization (GRPO)**:
+  - Critic-free policy gradient optimization following DeepSeekMath & DeepSeek-R1 methodologies.
+  - Computes advantage estimates normalized within candidate rollout groups ( \in \{4, 8, 16\}$).
+  - Comparative analysis of standard score normalization versus reward-centering dynamics.
+- **Automated Safety Calibration & LLM-as-a-Judge**:
+  - Structured evaluation harness pairing response generation with automated rubric-guided critique.
+  - Generates audit matrices and calibration sheets measuring alignment reliability under adversarial probes.
+- **Reasoning Alignment: RLVR vs RLAIF**:
+  - Compares ground-truth deterministic verifiers (RLVR) against pairwise LLM judges (RLAIF) on GSM8K and SVAMP challenge benchmarks.
+  - Evaluates out-of-distribution robustness, resistance to reward hacking, and reasoning generalization.
 
-## 1. Clone and install
+---
 
-```bash
-git clone https://github.com/COURSE_ORG/ATML-PA2-LLM-PostTraining.git
-cd ATML-PA2-LLM-PostTraining
-python -m pip install -r requirements.txt
+## 📁 Repository Structure
+
+```text
+├── configs/                   # Experiment YAML configurations (DPO, PPO, GRPO, Safety)
+│   ├── dpo.yaml               # DPO learning rates, beta, batch sizes
+│   ├── ppo.yaml               # Actor-critic hyperparams, clipping epsilon, KL penalty
+│   ├── grpo.yaml              # Group sizes, advantage normalization, rollout limits
+│   └── feedback.yaml          # Safety judge prompts, RLVR/RLAIF verifier configurations
+├── task1_dpo/                 # Task 1: Direct Preference Optimization Suite
+│   ├── train.py               # DPO training pipeline
+│   ├── evaluate.py            # Win-rate & log-likelihood evaluator
+│   ├── ablate_beta.py         # Beta sensitivity grid search
+│   └── analyze_length.py      # Response length correlation & bias analyzer
+├── task2_ppo/                 # Task 2: Proximal Policy Optimization Suite
+│   ├── continue_train.py      # PPO policy/value continuation trainer
+│   ├── evaluate.py            # Benchmark accuracy & value loss monitor
+│   ├── analyze_clipping.py    # Policy ratio clipping boundary audit
+│   └── ablate_kl.py           # KL divergence penalty schedule ablations
+├── task3_grpo/                # Task 3: Group Relative Policy Optimization Suite
+│   ├── continue_train.py      # Critic-free GRPO training loop
+│   ├── evaluate.py            # Group rollout evaluator
+│   ├── analyze_group_size.py  # Advantage variance vs group size G in {4, 8, 16}
+│   └── compare_normalization.py # Intra-group z-score vs min-max normalization
+├── task4_safety/              # Task 4: Automated Safety Calibration
+│   ├── generate_responses.py  # Multi-model probe generation
+│   ├── judge_responses.py     # Pairwise and pointwise LLM judge harness
+│   ├── make_audit_sheet.py    # Formatted audit sheets for manual/AI verification
+│   └── evaluate_safety.py     # Refusal rates, harmlessness, and helpfulness metrics
+├── task5_feedback/            # Task 5: RLVR vs RLAIF Benchmark
+│   ├── evaluate_math.py       # GSM8K / SVAMP reasoning benchmark runner
+│   ├── score_perturbations.py # Adversarial prompt perturbation sensitivity
+│   └── compare_feedback.py    # Verifiable reward vs neural judge alignment comparison
+├── scripts/                   # Environment validation and utility tools
+│   ├── check_environment.py   # Dependency and CUDA driver validator
+│   ├── download_assets.py     # Download required datasets and pretrained checkpoints
+│   └── validate_assets.py     # Checksum verification for model checkpoints
+└── requirements.txt           # Pinned dependencies (Transformers 4.57.1, TRL 0.27.2, PEFT 0.17.1)
 ```
 
-## 2. Download the course assets
+---
 
-The large course-created checkpoints and fixed data are distributed as a GitHub Release asset rather than normal Git files. After cloning, run:
+## 🚀 Quick Start
 
-```bash
-python -m scripts.download_assets
-python -m scripts.validate_assets
-```
-
-If your instructor provides a direct asset URL separately, use:
+### 1. Installation
 
 ```bash
-python -m scripts.download_assets --url '<ASSET_URL>'
-```
-
-Public base/reward/judge models are downloaded from Hugging Face at runtime and are **not** included in the course asset archive.
-
-The installer also materializes the fixed 100-example Task 5 transfer set from the official SVAMP challenge-set source if it is not already present. The tiny Task 1 word-limit prompt set is tracked directly in this repository.
-
-## 3. Environment check
-
-```bash
+git clone https://github.com/supus4562/llm-alignment-post-training.git
+cd llm-alignment-post-training
+pip install -r requirements.txt
 python -m scripts.check_environment
 ```
 
-Run commands from the repository root. The reference environment used to prepare the release pins Transformers 4.57.1, TRL 0.27.2, PEFT 0.17.1, and Tokenizers 0.22.1.
-
-## 4. Supplied course checkpoints
-
-After `download_assets`, these directories should exist:
-
-```text
-checkpoints/ppo_midpoint_policy/
-checkpoints/ppo_midpoint_value/
-checkpoints/grpo_midpoint_policy/
-checkpoints/rlvr_policy/
-checkpoints/rlaif_policy/
-```
-
-PPO and GRPO begin from the supplied continuation checkpoints. RLVR and RLAIF are supplied frozen evaluation policies; students do not retrain them.
-
-The PPO value checkpoint is intentionally released as the exact staff midpoint state, including its imperfect held-out value calibration. Treat critic behavior as an analysis variable rather than assuming a perfect baseline, and start every PPO fork from the identical supplied policy/value state. The default continuation generation cap is 512 tokens for feasibility; frozen evaluation uses the larger cap specified in `configs/ppo.yaml`.
-
-## 5. Task entry points
-
-### Task 1 - DPO
+### 2. Download Pretrained Assets & Datasets
 
 ```bash
+python -m scripts.download_assets
+python -m scripts.validate_assets
+```
+
+---
+
+## 🔬 Running Post-Training & Ablations
+
+### Direct Preference Optimization (DPO)
+```bash
+# Standard DPO training
 python -m task1_dpo.train --config configs/dpo.yaml --run-name standard
+
+# Evaluate trained adapter
 python -m task1_dpo.evaluate --config configs/dpo.yaml --adapter outputs/task1_dpo/standard --name standard
+
+# Beta temperature and length bias ablations
 python -m task1_dpo.ablate_beta --config configs/dpo.yaml
 python -m task1_dpo.analyze_length --config configs/dpo.yaml
 ```
 
-### Task 2 - PPO
-
+### Proximal Policy Optimization (PPO)
 ```bash
+# PPO Actor-Critic training
 python -m task2_ppo.continue_train --config configs/ppo.yaml --run-name standard
+
+# Evaluation and clipping/KL sensitivity analysis
 python -m task2_ppo.evaluate --config configs/ppo.yaml --adapter outputs/task2_ppo/standard --name standard
 python -m task2_ppo.analyze_clipping --config configs/ppo.yaml
 python -m task2_ppo.ablate_kl --config configs/ppo.yaml
 ```
 
-### Task 3 - GRPO
-
+### Group Relative Policy Optimization (GRPO)
 ```bash
+# DeepSeek-style GRPO training
 python -m task3_grpo.continue_train --config configs/grpo.yaml --run-name standard
+
+# Group size scaling (G = 4, 8, 16) and advantage normalization ablations
 python -m task3_grpo.evaluate --config configs/grpo.yaml --adapter outputs/task3_grpo/standard --name standard
 python -m task3_grpo.analyze_group_size --config configs/grpo.yaml
 python -m task3_grpo.compare_normalization --config configs/grpo.yaml
 ```
 
-### Task 4 - Safety calibration
-
-The judge loader/parser are supplied. You must implement the requested generation aggregation and evaluation.
-
+### Safety Calibration & LLM-as-a-Judge
 ```bash
 python -m task4_safety.generate_responses --config configs/feedback.yaml
 python -m task4_safety.judge_responses --config configs/feedback.yaml
@@ -119,23 +139,28 @@ python -m task4_safety.make_audit_sheet --config configs/feedback.yaml
 python -m task4_safety.evaluate_safety --config configs/feedback.yaml
 ```
 
-### Task 5 - RLVR vs RLAIF
-
-The exact verifier and pairwise AI judge are supplied; you implement the evaluation/analysis.
-
+### RLVR vs RLAIF Reasoning Comparison
 ```bash
+# Benchmark mathematical reasoning on GSM8K
 python -m task5_feedback.evaluate_math --config configs/feedback.yaml --dataset gsm
-python -m task5_feedback.score_perturbations --config configs/feedback.yaml
+
+# Out-of-domain transfer evaluation on SVAMP challenge set
 python -m task5_feedback.evaluate_math --config configs/feedback.yaml --dataset transfer
+python -m task5_feedback.score_perturbations --config configs/feedback.yaml
 python -m task5_feedback.compare_feedback --config configs/feedback.yaml
 ```
 
-## 6. Reproducibility rules
+---
 
-- Do not alter course-provided data, cached rollouts, or supplied checkpoints.
-- Start every short fork from the **same supplied midpoint checkpoint**.
-- Keep prompt IDs, generated-token/update budgets, seed, and evaluation procedure matched across ablations.
-- Commit your code, configs, small JSON/CSV logs, and figures. Do not commit downloaded checkpoints, raw course assets, or model caches.
-- Record peak VRAM and wall-clock time for the standard PPO and GRPO continuations.
+## 📜 Key References & Foundations
 
-See the assignment manual for the required experiments, metrics, and report questions.
+- Rafailov et al., *"Direct Preference Optimization: Your Language Model is Secretly a Reward Model"*, NeurIPS 2023.
+- Schulman et al., *"Proximal Policy Optimization Algorithms"*, arXiv:1707.06347, 2017.
+- Shao et al., *"DeepSeekMath: Pushing the Limits of Mathematical Reasoning in Open Language Models"*, 2024.
+- DeepSeek-AI, *"DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement Learning"*, 2025.
+- Uesato et al., *"Solving Math Word Problems with Process- and Outcome-Based Feedback"*, 2022.
+
+---
+
+## 📄 License
+This project is licensed under the MIT License.
